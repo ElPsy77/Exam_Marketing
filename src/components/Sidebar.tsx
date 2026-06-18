@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CreditCard, GraduationCap, LayoutDashboard, Sparkles } from "lucide-react";
+import { BookOpen, CreditCard, GraduationCap, LayoutDashboard, PieChart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -14,6 +14,12 @@ export function Sidebar() {
       active: pathname === "/",
       icon: <LayoutDashboard className="w-5 h-5" />,
       label: "Главная",
+    },
+    {
+      href: "/stats",
+      active: pathname === "/stats",
+      icon: <PieChart className="w-5 h-5" />,
+      label: "Статистика",
     },
     {
       href: "/topics",
@@ -69,7 +75,7 @@ export function Sidebar() {
         </div>
       </aside>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
         {items.map((item) => (
           <MobileNavItem key={item.href} {...item} />
         ))}

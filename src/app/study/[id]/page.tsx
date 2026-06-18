@@ -71,6 +71,55 @@ export default function StudyPage() {
     }));
   };
 
+  const handleQuizSubmit = () => {
+    setQuizSubmitted(true);
+
+    const correctCount = topic.quizQuestions.reduce((total, question) => {
+      const selectedAnswer = quizAnswers[question.id];
+      const correctAnswer = Array.isArray(question.correctAnswer)
+        ? question.correctAnswer.join("||")
+        : question.correctAnswer;
+
+      return total + (selectedAnswer === correctAnswer ? 1 : 0);
+    }, 0);
+    const normalizedScore = Math.round((correctCount / topic.quizQuestions.length) * 10);
+
+    setProgress(prev => ({
+      ...prev,
+      quizScores: {
+        ...prev.quizScores,
+        [topicId]: normalizedScore
+      },
+      topicStatuses: {
+        ...prev.topicStatuses,
+        [topicId]: normalizedScore >= 8 ? "mastered" : "studying"
+      }
+    }));
+
+    if (normalizedScore >= 8) {
+      confetti({
+        particleCount: 120,
+        spread: 75,
+        origin: { y: 0.7 },
+        colors: ['#10b981', '#6366f1', '#f59e0b']
+      });
+    }
+  };
+
+  const resetQuiz = () => {
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+  };
+
+  const correctQuizCount = topic.quizQuestions.reduce((total, question) => {
+    const correctAnswer = Array.isArray(question.correctAnswer)
+      ? question.correctAnswer.join("||")
+      : question.correctAnswer;
+
+    return total + (quizAnswers[question.id] === correctAnswer ? 1 : 0);
+  }, 0);
+  const allQuizAnswered = topic.quizQuestions.every(question => quizAnswers[question.id]);
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10 md:space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
