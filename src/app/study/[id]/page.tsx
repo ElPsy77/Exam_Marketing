@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, ArrowLeft, BookOpen, Brain, CheckCircle, Lightbulb, MessageSquare, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, BookOpen, Brain, CheckCircle, Lightbulb, MessageSquare, RotateCcw, Sparkles, Trophy } from "lucide-react";
 import { useState } from "react";
 import { evaluateRecall, RecallFeedback } from "@/lib/gemini";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,8 @@ export default function StudyPage() {
   const [recallText, setRecallText] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<RecallFeedback | null>(null);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
 
   if (!isMounted) return <div className="animate-pulse space-y-8">
     <div className="h-10 w-64 bg-slate-200 rounded-lg" />
@@ -71,6 +73,55 @@ export default function StudyPage() {
       }));
     }
   };
+
+  const handleQuizSubmit = () => {
+    setQuizSubmitted(true);
+
+    const correctCount = topic.quizQuestions.reduce((total, question) => {
+      const selectedAnswer = quizAnswers[question.id];
+      const correctAnswer = Array.isArray(question.correctAnswer)
+        ? question.correctAnswer.join("||")
+        : question.correctAnswer;
+
+      return total + (selectedAnswer === correctAnswer ? 1 : 0);
+    }, 0);
+    const normalizedScore = Math.round((correctCount / topic.quizQuestions.length) * 10);
+
+    setProgress(prev => ({
+      ...prev,
+      quizScores: {
+        ...prev.quizScores,
+        [topicId]: normalizedScore
+      },
+      topicStatuses: {
+        ...prev.topicStatuses,
+        [topicId]: normalizedScore >= 8 ? "mastered" : "studying"
+      }
+    }));
+
+    if (normalizedScore >= 8) {
+      confetti({
+        particleCount: 120,
+        spread: 75,
+        origin: { y: 0.7 },
+        colors: ['#10b981', '#6366f1', '#f59e0b']
+      });
+    }
+  };
+
+  const resetQuiz = () => {
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+  };
+
+  const correctQuizCount = topic.quizQuestions.reduce((total, question) => {
+    const correctAnswer = Array.isArray(question.correctAnswer)
+      ? question.correctAnswer.join("||")
+      : question.correctAnswer;
+
+    return total + (quizAnswers[question.id] === correctAnswer ? 1 : 0);
+  }, 0);
+  const allQuizAnswered = topic.quizQuestions.every(question => quizAnswers[question.id]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10 md:space-y-8">
@@ -250,13 +301,124 @@ export default function StudyPage() {
           </AnimatePresence>
         </TabsContent>
 
-        <TabsContent value="quiz">
-          <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-100/50 py-20 text-center md:py-32">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-xl bg-white shadow-sm">
-              <CheckCircle className="w-10 h-10 text-slate-300" />
+        <TabsContent value="quiz" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="space-y-5">
+              {topic.quizQuestions.map((question, questionIndex) => {
+                const correctAnswer = Array.isArray(question.correctAnswer)
+                  ? question.correctAnswer.join("||")
+                  : question.correctAnswer;
+                const selectedAnswer = quizAnswers[question.id];
+                const isCorrect = selectedAnswer === correctAnswer;
+
+                return (
+                  <Card key={question.id} className="overflow-hidden rounded-xl border-none bg-white shadow-sm">
+                    <div className="space-y-5 p-5 sm:p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-black text-primary">
+                          {questionIndex + 1}
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-base font-black leading-relaxed text-slate-900 sm:text-lg">
+                            {question.question}
+                          </h3>
+                          <Badge variant="secondary" className="rounded-full border-none bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            Один вариант ответа
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {question.options?.map((option) => {
+                          const isSelected = selectedAnswer === option;
+                          const isRightOption = option === correctAnswer;
+
+                          return (
+                            <button
+                              key={option}
+                              type="button"
+                              disabled={quizSubmitted}
+                              onClick={() => setQuizAnswers(prev => ({ ...prev, [question.id]: option }))}
+                              className={cn(
+                                "w-full rounded-xl border-2 p-4 text-left text-sm font-semibold leading-relaxed transition-all sm:text-base",
+                                "focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-default",
+                                !quizSubmitted && isSelected && "border-primary bg-primary/5 text-primary",
+                                !quizSubmitted && !isSelected && "border-slate-100 bg-white text-slate-600 hover:border-primary/30 hover:bg-slate-50",
+                                quizSubmitted && isRightOption && "border-emerald-500 bg-emerald-50 text-emerald-700",
+                                quizSubmitted && isSelected && !isRightOption && "border-rose-500 bg-rose-50 text-rose-700",
+                                quizSubmitted && !isSelected && !isRightOption && "border-slate-100 bg-slate-50 text-slate-400"
+                              )}
+                            >
+                              {option}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {quizSubmitted && (
+                        <div className={cn(
+                          "rounded-xl p-4 text-sm font-medium leading-relaxed",
+                          isCorrect ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"
+                        )}>
+                          <div className="mb-1 flex items-center gap-2 font-black">
+                            {isCorrect ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                            {isCorrect ? "Верно" : "Нужно повторить"}
+                          </div>
+                          {question.explanation}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
-            <h3 className="text-2xl font-bold text-slate-500 mb-2">Тест скоро появится</h3>
-            <p className="text-slate-400 font-medium">Мы готовим лучшие вопросы для этой темы.</p>
+
+            <aside className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+              <Card className="rounded-xl border-none bg-white p-5 shadow-sm">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black uppercase tracking-widest text-slate-400">Тренировка</div>
+                    <div className="text-lg font-black text-slate-900">
+                      {quizSubmitted ? `${correctQuizCount}/${topic.quizQuestions.length}` : `${Object.keys(quizAnswers).length}/${topic.quizQuestions.length}`}
+                    </div>
+                  </div>
+                </div>
+
+                {quizSubmitted ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-slate-50 p-4 text-center">
+                      <div className="text-4xl font-black text-slate-900">
+                        {Math.round((correctQuizCount / topic.quizQuestions.length) * 10)}/10
+                      </div>
+                      <div className="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Итоговый балл
+                      </div>
+                    </div>
+                    <Button variant="outline" className="h-12 w-full rounded-xl font-bold" onClick={resetQuiz}>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Пройти заново
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    className="h-12 w-full rounded-xl font-black"
+                    onClick={handleQuizSubmit}
+                    disabled={!allQuizAnswered}
+                  >
+                    Завершить тест
+                  </Button>
+                )}
+
+                {!allQuizAnswered && !quizSubmitted && (
+                  <p className="mt-3 text-center text-xs font-medium text-slate-400">
+                    Ответь на все вопросы, чтобы сохранить результат.
+                  </p>
+                )}
+              </Card>
+            </aside>
           </div>
         </TabsContent>
       </Tabs>
