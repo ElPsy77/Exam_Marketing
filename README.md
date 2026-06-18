@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Marketing Exam Prep
 
-## Getting Started
+Учебная платформа для подготовки к экзамену по маркетингу: конспекты по 30 темам, карточки, тематические тесты, симулятор экзамена и AI-проверка пересказа через Gemini.
 
-First, run the development server:
+## Локальный запуск
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Gemini AI
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+AI-проверка пересказа работает через серверный endpoint `POST /api/recall`, поэтому ключ не попадает в клиентский bundle.
 
-## Learn More
+1. Создайте `.env.local` из `.env.example`.
+2. Добавьте ключ:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Если в проекте уже используется имя `NEXT_PUBLIC_GEMINI_API_KEY`, приложение тоже его прочитает на сервере как fallback, но для Vercel рекомендуется `GEMINI_API_KEY`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Деплой на Vercel
 
-## Deploy on Vercel
+1. Загрузите репозиторий на GitHub/GitLab/Bitbucket.
+2. В Vercel нажмите **Add New → Project** и выберите репозиторий.
+3. Framework Preset: **Next.js**.
+4. В **Settings → Environment Variables** добавьте:
+   - `GEMINI_API_KEY` — ваш Gemini API key.
+5. Нажмите **Deploy**.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Команды сборки уже описаны в `vercel.json`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm install
+npm run build
+```
+
+## Скрипты
+
+```bash
+npm run dev    # запуск тестового режима
+npm run build  # production build для Vercel
+npm run start  # запуск production build
+npm run lint   # ESLint
+```
