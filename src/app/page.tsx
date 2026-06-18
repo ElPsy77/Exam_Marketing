@@ -4,7 +4,7 @@ import { useProgress, initialProgress } from "@/hooks/useProgress";
 import { topics } from "@/data/topics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, ArrowRight, BookOpen, Brain, CheckCircle, GraduationCap, Sparkles, Trophy } from "lucide-react";
+import { AlertTriangle, ArrowRight, BookOpen, Brain, CheckCircle, GraduationCap, PieChart, Sparkles, Trophy } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -58,9 +58,15 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">Подготовка к маркетингу</h1>
           <p className="text-base font-medium text-muted-foreground md:text-lg">Все 30 экзаменационных тем в одном учебном пространстве.</p>
         </div>
-        <div className="flex w-fit items-center space-x-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-bold uppercase tracking-widest text-primary">Учебный режим</span>
+        <div className="flex flex-col items-end gap-3">
+          <Link href="/stats" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+            <PieChart className="w-4 h-4" />
+            Подробная статистика
+          </Link>
+          <div className="flex w-fit items-center space-x-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm font-bold uppercase tracking-widest text-primary">Учебный режим</span>
+          </div>
         </div>
       </div>
 
